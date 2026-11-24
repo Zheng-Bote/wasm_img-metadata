@@ -55,7 +55,7 @@ pub fn handle_http_request(
 ) -> HttpResponse {
     let (path, query) = uri.split_once('?').unwrap_or((uri, ""));
 
-    if path == "/v1/metadata/health" {
+    if path == "/v1/metadata/health" || path == "/health" {
         if !method.eq_ignore_ascii_case("GET") {
             return HttpResponse::error_json(405, "Method Not Allowed (expected GET)");
         }
@@ -64,7 +64,7 @@ pub fn handle_http_request(
         );
     }
 
-    if path != "/v1/metadata/extract" {
+    if path != "/v1/metadata/extract" && path != "/extract" {
         return HttpResponse::error_json(
             404,
             format!("Endpoint not found: '{path}' (expected /v1/metadata/extract or /v1/metadata/health)"),

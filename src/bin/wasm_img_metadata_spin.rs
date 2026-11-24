@@ -4,7 +4,15 @@ use wasm_img_metadata::provider::http::handle_http_request;
 
 fn main() {
     let method = std::env::var("REQUEST_METHOD").unwrap_or_else(|_| "POST".into());
-    let uri = std::env::var("PATH_INFO").unwrap_or_else(|_| "/v1/metadata/extract".into());
+    let uri = std::env::var("X_FULL_URL")
+        .ok()
+        .and_then(|full| {
+            // Strip scheme://host[:port] to keep path + query
+            let after_scheme = full.split_once("://").map(|(_, rest)| rest).unwrap_or(&full);
+            after_scheme.find('/').map(|idx| after_scheme[idx..].to_string())
+        })
+        .or_else(|| std::env::var("PATH_INFO").ok())
+        .unwrap_or_else(|| "/v1/metadata/extract".into());
     let content_type = std::env::var("CONTENT_TYPE")
         .or_else(|_| std::env::var("HTTP_CONTENT_TYPE"))
         .unwrap_or_default();
