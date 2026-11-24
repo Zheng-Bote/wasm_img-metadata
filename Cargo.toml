@@ -1,0 +1,20 @@
+[package]
+name = "wasm_img-metadata"
+version = "0.1.0"
+edition = "2021"
+default-run = "wasm_img-metadata"
+description = "Pure Rust EXIF, IPTC, and XMP image metadata extractor for JPEG, TIFF, PNG, and WebP (CLI, WIT Component, and Fermyon Spin HTTP Service)"
+license = "Apache-2.0"
+
+[[bin]]
+name = "wasm_img-metadata"
+path = "src/main.rs"
+
+[[bin]]
+name = "wasm_img_metadata_spin"
+path = "src/bin/wasm_img_metadata_spin.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+flate2 = "1.1"

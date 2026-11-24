@@ -27,11 +27,14 @@ thresholds:
     - "src/iptc/**"
     - "src/xmp/**"
     - "src/cli/**"
+    - "src/provider/**"
   feature_artifacts_required_when:
     min_layers_touched: 2
     touched_paths:
       - "src/**"
       - "Cargo.toml"
+      - "spin/**"
+      - "wit/**"
 
 exclude:
   - target/**
