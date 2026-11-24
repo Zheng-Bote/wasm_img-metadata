@@ -15,3 +15,5 @@ Reihenfolge der Umsetzung. Jede Task nennt das Akzeptanzkriterium, auf das sie e
 - [x] AC-3 EXIF-, IPTC- und XMP-Parser mit vollständigem Erhalt originaler Feldnamen und unbekannter Tags in `src/exif/mod.rs`, `src/iptc/mod.rs` und `src/xmp/mod.rs` implementieren.
 - [x] AC-4 Typkonvertierung (Zahlen, Arrays, ISO-8601-Daten) und Initialisierung leerer Sektionen (`{}`) sicherstellen.
 - [x] AC-5 Fehlerbehandlung als garantierte JSON-Ausgabe (`{"success": false, "error": "..."}`) sowie automatisierte Tests für AC-1 bis AC-5 implementieren.
+- [x] AC-6 WIT-Spezifikation (`wit/metadata-provider.wit`) und WASI Component Provider (`src/provider/mod.rs`) implementieren und testen.
+- [x] AC-7 Fermyon Spin HTTP Provider (`spin/spin.toml`, `src/provider/http.rs`, `src/bin/wasm_img_metadata_spin.rs`) inkl. `wasm32-wasip2`-Build und Tests implementieren.

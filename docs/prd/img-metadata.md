@@ -8,22 +8,26 @@ touches:
   - Cargo.lock
   - README.md
   - tests/**
+  - wit/**
+  - spin/**
+  - sdd.config.yaml
+  - .github/ISSUE_TEMPLATE/feature_spec.md
 ---
 
 # PRD — Image Metadata Extractor (EXIF, IPTC, XMP) (`img-metadata`)
 
 ## Problem
 
-Entwickler und automatisierte Pipelines benötigen ein zuverlässiges, speichersicheres CLI-Werkzeug in Rust, das aus Bilddateien (JPEG, TIFF, PNG, WebP) sämtliche vorhandenen EXIF-, IPTC- und XMP-Metadaten verlustfrei extrahiert und als einheitliches, maschinenlesbares JSON-Dokument auf `stdout` ausgibt — ohne unbekannte Tags stillschweigend zu verwerfen oder bei Fehlern nicht-JSON-Ausgaben zu erzeugen.
+Entwickler, WASI-Komponenten und serverlose Microservices (Fermyon Spin) benötigen ein zuverlässiges, speichersicheres Werkzeug in Rust, das aus Bilddateien (JPEG, TIFF, PNG, WebP) sämtliche vorhandenen EXIF-, IPTC- und XMP-Metadaten verlustfrei extrahiert und als einheitliches, maschinenlesbares JSON-Dokument ausgibt — sowohl auf der Kommandozeile (`stdout`), über das WASI Component Model (`wit`) als auch als Fermyon Spin HTTP-Service (`/v1/metadata/extract`).
 
 ## Ziel
 
-Bereitstellung einer vollständigen, mit stabilem Rust und Cargo ohne externe C-Abhängigkeiten kompilierbaren Anwendung, die einen einzelnen Bildpfad (`<image_path>`) entgegennimmt, alle EXIF-, IPTC- und XMP-Metadaten extrahiert und ein strikt typisiertes JSON-Dokument auf `stdout` ausgibt.
+Bereitstellung einer vollständigen, mit stabilem Rust und Cargo ohne externe C-Abhängigkeiten kompilierbaren Anwendung (nativ und `wasm32-wasip2`), die Bilddateien über CLI (`<image_path>`), WIT-Interface und Spin-HTTP-Endpunkt verarbeitet, alle EXIF-, IPTC- und XMP-Metadaten extrahiert und ein strikt typisiertes JSON-Dokument liefert.
 
 ## Nutzer
 
 - Backend-Dienste, Medien-Pipelines und CLI-Nutzer, die Bildmetadaten automatisiert als JSON weiterverarbeiten.
-- WASI-/Rust-Anwendungen, die eine reine Rust-Bibliothek und CLI ohne native C++-Abhängigkeiten benötigen.
+- WASI-Komponenten und Fermyon-Spin-Applikationen, die Metadaten-Extraktion serverlos über HTTP oder In-Process via WIT ausführen.
 
 ## Umfang
 
@@ -32,6 +36,8 @@ Bereitstellung einer vollständigen, mit stabilem Rust und Cargo ohne externe C-
 - Extraktion aller verfügbaren EXIF-, IPTC- und XMP-Metadaten.
 - Erhalt originaler Feldnamen, Emission unbekannter Tags, Erhalt von Arrays und numerischen Werten, ISO-8601-Konvertierung von Datumswerten, leere Objekte `{}` für fehlende Sektionen.
 - Strukturiertes JSON sowohl im Erfolgsfall (`"success": true`) als auch im Fehlerfall (`"success": false, "error": "..."`).
+- WASI Component Model Interface (`wit/metadata-provider.wit`) und Provider (`src/provider/mod.rs`).
+- Fermyon Spin HTTP Service (`spin/spin.toml`, `src/provider/http.rs`, `src/bin/wasm_img_metadata_spin.rs`).
 
 ## Nicht-Ziele
 
@@ -45,3 +51,5 @@ Bereitstellung einer vollständigen, mit stabilem Rust und Cargo ohne externe C-
 - **AC-3** Bekannte Felder behalten ihre originalen Feldnamen (z. B. `CameraModel` / `Model`, `Keywords`, `dc:title`), während unbekannte Tags in EXIF, IPTC und XMP niemals verworfen, sondern mit eindeutigen Schlüsseln ausgegeben werden.
 - **AC-4** Datentypen werden originalgetreu abgebildet: Arrays bleiben JSON-Arrays, numerische Werte bleiben JSON-Zahlen, Datumsangaben werden nach Möglichkeit in ISO-8601-Strings konvertiert und fehlende Sektionen (`exif`, `iptc`, `xmp`) werden als leere JSON-Objekte `{}` ausgegeben.
 - **AC-5** Bei fehlendem/ungültigem CLI-Argument, nicht existierender Datei oder ungültigem/nicht unterstütztem Bildformat gibt die Anwendung valides JSON der Form `{ "success": false, "error": "..." }` aus.
+- **AC-6** Das WIT-Interface (`wit/metadata-provider.wit`) und `MetadataProvider` (`src/provider/mod.rs`) stellen `extract_from_path` und `extract_from_bytes` für WASI-Komponenten bereit und liefern dasselbe JSON-Dokument.
+- **AC-7** Der Fermyon Spin HTTP Provider (`spin/spin.toml`, `src/provider/http.rs`, `src/bin/wasm_img_metadata_spin.rs`) verarbeitet `POST /v1/metadata/extract` (sowohl mit Raw-Image-Bytes als auch mit JSON-Pfad `{ "file": "..." }`) und `GET /v1/metadata/health` und liefert im Erfolgs- wie im Fehlerfall valides JSON.

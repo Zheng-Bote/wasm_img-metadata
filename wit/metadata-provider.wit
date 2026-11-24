@@ -1,0 +1,17 @@
+package wasm-img:metadata@0.1.0;
+
+/// Interface for extracting EXIF, IPTC, and XMP metadata from JPEG, TIFF, PNG, and WebP images.
+interface extractor {
+    /// Extracts all available EXIF, IPTC, and XMP metadata from a file path inside the WASI sandbox.
+    /// Returns the serialized JSON response document.
+    extract-from-path: func(image-path: string) -> result<string, string>;
+
+    /// Extracts all available EXIF, IPTC, and XMP metadata from raw image bytes.
+    /// Returns the serialized JSON response document.
+    extract-from-bytes: func(file-label: string, image-bytes: list<u8>) -> result<string, string>;
+}
+
+/// The WASI component world exporting the metadata extractor interface.
+world metadata-provider {
+    export extractor;
+}

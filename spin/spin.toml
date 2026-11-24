@@ -1,0 +1,19 @@
+spin_manifest_version = 2
+
+[application]
+name = "wasm-img-metadata-provider"
+version = "0.1.0"
+authors = ["Zheng-Bote <zheng.bote@googlemail.com>"]
+description = "Fermyon Spin HTTP Metadata Extraction Service (EXIF, IPTC, XMP) for JPEG, TIFF, PNG, and WebP"
+
+[[trigger.http]]
+route = "/v1/metadata/..."
+component = "metadata-service"
+
+[component.metadata-service]
+source = "target/wasm32-wasip2/release/wasm_img_metadata_spin.wasm"
+files = [{ source = "Example/", destination = "Example/" }]
+
+[component.metadata-service.build]
+command = "cargo build --bin wasm_img_metadata_spin --target wasm32-wasip2 --release"
+watch = ["src/**/*.rs", "Cargo.toml", "wit/**/*.wit"]

@@ -5,6 +5,8 @@ use flate2::write::ZlibEncoder;
 use flate2::Compression;
 use serde_json::{json, Value};
 use wasm_img_metadata::cli::{extract_metadata_from_bytes, run_cli_with_args};
+use wasm_img_metadata::provider::http::handle_http_request;
+use wasm_img_metadata::provider::MetadataProvider;
 
 /// Helper to build a synthetic Little-Endian TIFF/EXIF binary containing:
 /// - Make ("Canon")
@@ -508,3 +510,79 @@ fn test_ac5_error_handling_valid_json() {
     assert!(!err.success);
     assert!(err.error.contains("Unsupported or unrecognized image format"));
 }
+
+// img-metadata AC-6: WIT MetadataProvider extracts metadata from path and raw bytes returning the deterministic JSON contract
+#[test]
+fn test_ac6_wit_metadata_provider() {
+    let jpg = build_sample_jpeg();
+    let json_str = MetadataProvider::extract_from_bytes("wit_photo.jpg", &jpg)
+        .expect("WIT extract_from_bytes should succeed");
+    let parsed: Value = serde_json::from_str(&json_str).expect("valid JSON from WIT provider");
+    assert_eq!(parsed["success"], json!(true));
+    assert_eq!(parsed["file"], json!("wit_photo.jpg"));
+    assert_eq!(parsed["metadata"]["exif"]["CameraModel"], json!("Canon EOS R5"));
+    assert_eq!(parsed["metadata"]["iptc"]["Keywords"], json!(["rust", "metadata", "exif"]));
+    assert_eq!(parsed["metadata"]["xmp"]["dc:title"], json!("Sunset Over Mountains"));
+
+    let tmp_path = std::env::temp_dir().join("test_ac6_wit_photo.jpg");
+    fs::write(&tmp_path, &jpg).expect("write temp file");
+    let path_str = tmp_path.to_string_lossy().to_string();
+    let path_json = MetadataProvider::extract_from_path(&path_str)
+        .expect("WIT extract_from_path should succeed");
+    let _ = fs::remove_file(&tmp_path);
+    let parsed_path: Value = serde_json::from_str(&path_json).unwrap();
+    assert_eq!(parsed_path["success"], json!(true));
+    assert_eq!(parsed_path["file"], json!(path_str));
+}
+
+// img-metadata AC-7: Fermyon Spin HTTP provider handles health check, binary image upload, JSON file path request, and HTTP errors
+#[test]
+fn test_ac7_spin_http_provider() {
+    // 1. Health check endpoint
+    let health = handle_http_request("GET", "/v1/metadata/health", &[], &[]);
+    assert_eq!(health.status, 200);
+    let health_json: Value = serde_json::from_str(&health.body).unwrap();
+    assert_eq!(health_json["status"], json!("ok"));
+    assert_eq!(health_json["service"], json!("wasm-img-metadata-spin"));
+
+    // 2. Binary image upload via POST /v1/metadata/extract
+    let jpg = build_sample_jpeg();
+    let headers = vec![
+        ("Content-Type".to_string(), "image/jpeg".to_string()),
+        ("X-File-Name".to_string(), "spin_upload.jpg".to_string()),
+    ];
+    let resp = handle_http_request("POST", "/v1/metadata/extract", &headers, &jpg);
+    assert_eq!(resp.status, 200);
+    let body_json: Value = serde_json::from_str(&resp.body).unwrap();
+    assert_eq!(body_json["success"], json!(true));
+    assert_eq!(body_json["file"], json!("spin_upload.jpg"));
+    assert_eq!(body_json["metadata"]["exif"]["CameraModel"], json!("Canon EOS R5"));
+    assert_eq!(body_json["metadata"]["iptc"]["Keywords"], json!(["rust", "metadata", "exif"]));
+    assert_eq!(body_json["metadata"]["xmp"]["dc:title"], json!("Sunset Over Mountains"));
+
+    // 3. JSON file reference via POST /v1/metadata/extract
+    let tmp_path = std::env::temp_dir().join("test_ac7_spin_file.webp");
+    fs::write(&tmp_path, build_sample_webp()).expect("write sample webp");
+    let path_str = tmp_path.to_string_lossy().to_string();
+    let json_req = serde_json::to_vec(&json!({ "file": path_str })).unwrap();
+    let json_headers = vec![("Content-Type".to_string(), "application/json".to_string())];
+    let resp_file = handle_http_request("POST", "/v1/metadata/extract", &json_headers, &json_req);
+    let _ = fs::remove_file(&tmp_path);
+    assert_eq!(resp_file.status, 200);
+    let file_json: Value = serde_json::from_str(&resp_file.body).unwrap();
+    assert_eq!(file_json["success"], json!(true));
+    assert_eq!(file_json["file"], json!(path_str));
+    assert_eq!(file_json["metadata"]["exif"]["CameraModel"], json!("Canon EOS R5"));
+
+    // 4. Error responses return valid JSON with "success": false
+    let bad_method = handle_http_request("GET", "/v1/metadata/extract", &[], &[]);
+    assert_eq!(bad_method.status, 405);
+    let bad_method_json: Value = serde_json::from_str(&bad_method.body).unwrap();
+    assert_eq!(bad_method_json["success"], json!(false));
+
+    let bad_payload = handle_http_request("POST", "/v1/metadata/extract", &[], b"corrupted");
+    assert_eq!(bad_payload.status, 422);
+    let bad_payload_json: Value = serde_json::from_str(&bad_payload.body).unwrap();
+    assert_eq!(bad_payload_json["success"], json!(false));
+}
+

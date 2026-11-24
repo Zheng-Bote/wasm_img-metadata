@@ -1,6 +1,7 @@
 {
   "version": 1,
   "entries": {
-    "docs/adr/0001-image-metadata-architecture.md": "4bc41bb67ba67bcdce4e60b51ba72a4edc4e3778849daf2f368e435e817be221"
+    "docs/adr/0001-image-metadata-architecture.md": "4bc41bb67ba67bcdce4e60b51ba72a4edc4e3778849daf2f368e435e817be221",
+    "docs/adr/0002-wit-and-spin-http-provider.md": "04c48a3355cdf684e3dcab7bb8b0332ff728bef82eba663ad10db225ef6f342f"
   }
 }
