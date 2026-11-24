@@ -78,10 +78,21 @@ pub fn extract_metadata_from_path(image_path: &str) -> Result<SuccessResponse, E
     }
 
     let path = Path::new(image_path);
-    let bytes = fs::read(path).map_err(|e| ErrorResponse {
-        success: false,
-        error: format!("Failed to read file '{}': {}", image_path, e),
-    })?;
+    let bytes = fs::read(path)
+        .or_else(|e| {
+            // In WASI/Spin sandboxes where directories are mounted at root (e.g. "/Example/..."),
+            // also try with a leading slash if a relative path was supplied.
+            if !image_path.starts_with('/') {
+                let rooted = format!("/{image_path}");
+                fs::read(Path::new(&rooted))
+            } else {
+                Err(e)
+            }
+        })
+        .map_err(|e| ErrorResponse {
+            success: false,
+            error: format!("Failed to read file '{}': {}", image_path, e),
+        })?;
 
     extract_metadata_from_bytes(image_path, &bytes)
 }

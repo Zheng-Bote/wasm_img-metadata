@@ -15,6 +15,7 @@ touches:
   - wit/**
   - spin/**
   - sdd.config.yaml
+  - .gitignore
   - .github/ISSUE_TEMPLATE/feature_spec.md
 ---
 

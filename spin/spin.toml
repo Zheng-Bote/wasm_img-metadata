@@ -9,11 +9,13 @@ description = "Fermyon Spin HTTP Metadata Extraction Service (EXIF, IPTC, XMP) f
 [[trigger.http]]
 route = "/v1/metadata/..."
 component = "metadata-service"
+executor = { type = "wagi" }
 
 [component.metadata-service]
-source = "target/wasm32-wasip2/release/wasm_img_metadata_spin.wasm"
-files = [{ source = "Example/", destination = "Example/" }]
+source = "../target/wasm32-wasip2/release/wasm_img_metadata_spin.wasm"
+files = [{ source = "../Example/", destination = "/Example/" }]
 
 [component.metadata-service.build]
+workdir = ".."
 command = "cargo build --bin wasm_img_metadata_spin --target wasm32-wasip2 --release"
 watch = ["src/**/*.rs", "Cargo.toml", "wit/**/*.wit"]
