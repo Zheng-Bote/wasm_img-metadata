@@ -7,6 +7,10 @@ touches:
   - Cargo.toml
   - Cargo.lock
   - README.md
+  - README_de.md
+  - CHANGELOG.md
+  - NOTICE
+  - Example/**
   - tests/**
   - wit/**
   - spin/**
