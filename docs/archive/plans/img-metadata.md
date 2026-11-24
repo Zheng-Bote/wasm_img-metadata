@@ -1,7 +1,8 @@
 ---
 feature: img-metadata
-status: approved
+status: archived
 archive-after: 2027-01-01
+release: v0.1.0
 ---
 
 # Plan — Image Metadata Extractor (EXIF, IPTC, XMP) (`img-metadata`)

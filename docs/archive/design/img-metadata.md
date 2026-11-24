@@ -1,6 +1,6 @@
 ---
 feature: img-metadata
-status: approved
+status: archived
 archive-after: 2027-01-01
 touches:
   - src/**
@@ -17,6 +17,7 @@ touches:
   - sdd.config.yaml
   - .gitignore
   - .github/ISSUE_TEMPLATE/feature_spec.md
+release: v0.1.0
 ---
 
 # Tech Spec — Image Metadata Extractor (EXIF, IPTC, XMP) (`img-metadata`)
